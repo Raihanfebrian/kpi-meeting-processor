@@ -58,11 +58,7 @@ export default function LogsPage() {
       const rawOutput = (log.raw_output || '').toLowerCase();
       const parsedOutput = prettyJson(log.parsed_output).toLowerCase();
 
-      return (
-        model.includes(query) ||
-        rawOutput.includes(query) ||
-        parsedOutput.includes(query)
-      );
+      return model.includes(query) || rawOutput.includes(query) || parsedOutput.includes(query);
     });
   }, [logs, search]);
 
@@ -78,6 +74,7 @@ export default function LogsPage() {
     }, 0);
 
     const logsWithLatency = logs.filter((log) => Number(log.latency_ms || 0) > 0);
+
     const avgLatency = logsWithLatency.length
       ? Math.round(
           logsWithLatency.reduce((sum, log) => sum + Number(log.latency_ms || 0), 0) /
@@ -113,14 +110,17 @@ export default function LogsPage() {
           <span>Total Logs</span>
           <strong>{stats.totalLogs}</strong>
         </div>
+
         <div className="stat-card">
           <span>Total Tokens</span>
           <strong>{stats.totalTokens.toLocaleString()}</strong>
         </div>
+
         <div className="stat-card">
           <span>Avg Latency</span>
           <strong>{stats.avgLatency ? `${stats.avgLatency}ms` : '-'}</strong>
         </div>
+
         <div className="stat-card">
           <span>Error Count</span>
           <strong>{stats.errorCount}</strong>
@@ -159,8 +159,7 @@ export default function LogsPage() {
                   >
                     <strong>{log.model || 'Unknown model'}</strong>
                     <span>
-                      {Number(log.total_tokens || 0).toLocaleString()} tokens ·{' '}
-                      {log.latency_ms || 0}ms
+                      {Number(log.total_tokens || 0).toLocaleString()} tokens · {log.latency_ms || 0}ms
                     </span>
                     <small>{formatDate(log.created_at)}</small>
                     {hasError && <em className="log-error-pill">Error</em>}
@@ -177,6 +176,7 @@ export default function LogsPage() {
               <h2>Selected log detail</h2>
               <p>Review the exact model call and structured output.</p>
             </div>
+
             {selectedLog && (
               <span className={`badge ${getErrorText(selectedLog) ? 'danger-badge' : ''}`}>
                 {getErrorText(selectedLog) ? 'Error' : 'Success'}
@@ -193,18 +193,22 @@ export default function LogsPage() {
                   <span>Model</span>
                   <strong>{selectedLog.model || 'Unknown'}</strong>
                 </div>
+
                 <div>
                   <span>Input tokens</span>
                   <strong>{selectedLog.input_tokens || 0}</strong>
                 </div>
+
                 <div>
                   <span>Output tokens</span>
                   <strong>{selectedLog.output_tokens || 0}</strong>
                 </div>
+
                 <div>
                   <span>Total tokens</span>
                   <strong>{selectedLog.total_tokens || 0}</strong>
                 </div>
+
                 <div>
                   <span>Latency</span>
                   <strong>{selectedLog.latency_ms || 0}ms</strong>

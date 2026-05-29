@@ -211,6 +211,7 @@ pre {
   padding: 2.4rem;
   max-width: 1220px;
   width: 100%;
+  margin: 0 auto;
 }
 
 .page-header {
@@ -723,6 +724,39 @@ pre {
 .logs-grid .card {
   align-self: start;
 }
+
+.log-error-pill {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  background: #FFF1F0;
+  color: #B42318;
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 900;
+  border: 1px solid #FECDCA;
+}
+
+.danger-badge {
+  background: #FFF1F0;
+  color: #B42318;
+  border-color: #FECDCA;
+}
+
+.log-row {
+  position: relative;
+}
+
+.log-row.active .log-error-pill {
+  background: rgba(255, 255, 255, 0.18);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.logs-grid .card {
+  align-self: start;
+}
+
 /* Print foundation for PDF export later */
 
 @media print {
@@ -912,5 +946,12 @@ pre {
   textarea,
   button {
     font-size: 0.95rem;
+  }
+  .summary-card textarea {
+    min-height: 180px;
+  }
+
+  .action-card textarea {
+    min-height: 96px;
   }
 }
