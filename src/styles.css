@@ -356,6 +356,39 @@ pre {
 
 /* History */
 
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 1.1rem;
+  box-shadow: 0 18px 48px rgba(16, 24, 40, 0.06);
+  display: grid;
+  gap: 0.35rem;
+  border-top: 5px solid #FFCC00;
+}
+
+.stat-card span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.stat-card strong {
+  color: #1727AD;
+  font-size: 1.65rem;
+  letter-spacing: -0.04em;
+}
+
+.history-search {
+  min-width: 280px;
+}
+
 .history-row {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -559,7 +592,8 @@ pre {
 
   .logs-grid,
   .grid-2,
-  .metrics-grid {
+  .metrics-grid,
+  .stats-grid {
     grid-template-columns: 1fr;
   }
 
