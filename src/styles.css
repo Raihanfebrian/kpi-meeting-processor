@@ -1,6 +1,6 @@
 :root {
   --kpi-blue: #1727AD;
-  --kpi-blue-dark: #0D1778;
+  --kpi-blue-dark: #1727AD;
   --kpi-yellow: #FFCC00;
   --ink: #101828;
   --muted: #667085;
@@ -41,8 +41,8 @@ button {
   border: none;
   border-radius: 14px;
   padding: 0.85rem 1.1rem;
-  background: var(--kpi-yellow);
-  color: var(--kpi-blue);
+  background: #FFCC00;
+  color: #1727AD;
   cursor: pointer;
   font-weight: 800;
   box-shadow: 0 10px 24px rgba(255, 204, 0, 0.22);
@@ -126,9 +126,7 @@ pre {
   top: 0;
   height: 100vh;
   padding: 2rem;
-  background:
-    radial-gradient(circle at top left, rgba(255, 204, 0, 0.26), transparent 26%),
-    linear-gradient(180deg, var(--kpi-blue) 0%, var(--kpi-blue-dark) 100%);
+  background: #1727AD;
   color: white;
   display: flex;
   flex-direction: column;
@@ -154,8 +152,8 @@ pre {
   align-items: center;
   justify-content: center;
   border-radius: 14px;
-  background: var(--kpi-yellow);
-  color: var(--kpi-blue);
+  background: #FFCC00;
+  color: #1727AD;
   font-weight: 950;
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
 }
@@ -188,8 +186,8 @@ pre {
 
 .sidebar nav a.active,
 .sidebar nav a:hover {
-  background: var(--kpi-yellow);
-  color: var(--kpi-blue);
+  background: #FFCC00;
+  color: #1727AD;
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.16);
 }
 
