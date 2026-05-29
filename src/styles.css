@@ -506,7 +506,8 @@ pre {
 
   .no-print,
   .sidebar,
-  .button-row {
+  .button-row,
+  .page-header {
     display: none !important;
   }
 
