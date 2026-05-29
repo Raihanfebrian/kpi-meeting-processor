@@ -2,7 +2,7 @@
 
 A React + Vite internal AI tool built for the KPI Media Junior AI Engineer technical assessment.
 
-The app turns raw meeting transcripts into structured meeting notes, including summaries, action items, key decisions, warnings, editable outputs, export options, saved history, and LLM observability logs.
+KPI Meeting Processor turns raw meeting transcripts into structured, editable meeting notes. It generates summaries, action items, key decisions, and warnings, then stores the results in Supabase with a dedicated LLM observability layer.
 
 Live demo: https://kpi-meeting-processor.vercel.app
 Repository: https://github.com/Raihanfebrian/kpi-meeting-processor
@@ -11,30 +11,38 @@ Repository: https://github.com/Raihanfebrian/kpi-meeting-processor
 
 ## Overview
 
-KPI Meeting Processor is designed to help teams quickly process meeting transcripts into usable follow-up notes.
+KPI Meeting Processor is designed to help teams convert raw meeting transcripts into clear follow-up notes faster.
 
-Users can paste or upload a `.txt` transcript, process it through an AI workflow, review and edit the generated result, export the notes, and inspect every LLM call through a dedicated logs page.
+Users can paste a transcript, upload a `.txt` transcript file, process it through an AI workflow, review and edit the generated output, export the result, reopen previous meetings, and inspect every LLM call through a logs page.
 
 The tool focuses on three main goals:
 
-1. Reduce the manual work of summarizing meeting transcripts.
-2. Make action items and decisions easier to review and share.
-3. Provide observability for every AI call, including input, output, model, token usage, latency, and errors.
+1. Reduce manual effort in summarizing meeting transcripts.
+2. Make action items, owners, deadlines, and decisions easier to review.
+3. Provide LLM observability for debugging and evaluation.
 
 ---
 
-## Features
+## Key Features
 
 ### Transcript Processing
 
-* Paste raw meeting transcript.
-* Upload `.txt` transcript file.
-* Add meeting title.
-* Generate structured meeting notes using AI.
+* Paste raw meeting transcripts.
+* Upload `.txt` transcript files.
+* Add a meeting title.
+* Process transcripts through an n8n AI workflow.
 * Supports Indonesian, English, and mixed-language transcripts.
-* Preserves proper names, brand names, campaign names, and technical terms.
+* Preserves proper names, brand names, platform names, campaign names, and technical terms.
 
-### AI-Generated Output
+### Processing Experience
+
+* Custom `.txt` upload component instead of the default browser file input.
+* Step-by-step loading indicator while the transcript is being processed.
+* Responsive layout for desktop and mobile.
+* Fixed KPI-branded top navigation.
+* Clean KPI Media-inspired visual design.
+
+### AI-Generated Meeting Notes
 
 The AI returns structured JSON containing:
 
@@ -43,32 +51,31 @@ The AI returns structured JSON containing:
 * Owners
 * Deadlines
 * Key decisions
-* Warnings for unclear ownership, unclear deadline, or ambiguous transcript context
+* Warnings for unclear owner, unclear deadline, or ambiguous transcript context
 
-### Editable Result
+### Editable Output
 
-Users can edit the AI output before exporting:
+Users can review and edit the AI-generated result before exporting:
 
-* Edit meeting title
-* Edit summary
-* Edit action items
-* Edit owner and deadline
-* Add or remove action items
-* Edit key decisions
-* Add or remove key decisions
-* Save edited result back to Supabase
+* Edit meeting title.
+* Edit summary.
+* Edit action item task, owner, and deadline.
+* Add or remove action items.
+* Edit key decisions.
+* Add or remove key decisions.
+* Save edited output back to Supabase.
 
 ### Action Item Review UX
 
-The app highlights uncertain AI output:
+The app highlights incomplete or uncertain action items:
 
-* `Ready` badge for complete action items
-* `Needs review` badge for incomplete action items
-* `Owner missing` indicator
-* `Deadline missing` indicator
-* Warning banner when action items need review
+* `Ready` badge for complete action items.
+* `Needs review` badge for incomplete action items.
+* `Owner missing` indicator.
+* `Deadline missing` indicator.
+* Warning banner when generated output needs review.
 
-This is useful because meeting transcripts often contain unclear ownership or implied deadlines.
+This helps users avoid blindly trusting AI output when the transcript does not clearly mention an owner or deadline.
 
 ### Export Options
 
@@ -79,9 +86,9 @@ Users can export or share the final notes through:
 * Download `.md`
 * Print / Save as PDF
 
-The PDF export uses browser print with print-specific CSS, keeping the document clean and removing sidebar/navigation elements.
+The PDF export uses the browser print dialog with print-specific CSS, so the exported document removes navigation elements and keeps the meeting notes clean.
 
-### History
+### Meeting History
 
 The History page stores and displays processed meetings from Supabase.
 
@@ -91,12 +98,12 @@ It includes:
 * Total action items
 * Total tokens used
 * Average LLM latency
-* Search by title or summary
+* Search by meeting title or summary
 * Clickable meeting detail pages
 
 ### LLM Observability
 
-The LLM Logs page shows every AI call stored in Supabase.
+The LLM Logs page stores and displays every AI call.
 
 It includes:
 
@@ -115,7 +122,7 @@ It includes:
 * Parsed output
 * Error messages
 
-This makes the tool easier to debug and evaluate as an AI application.
+This makes the tool easier to debug, evaluate, and explain as an AI application.
 
 ---
 
@@ -132,8 +139,8 @@ This makes the tool easier to debug and evaluate as an AI application.
 
 * n8n on SumoPod
 * Production webhook
-* HTTP Request node for AI call
-* Code nodes for prompt construction, parsing, response shaping, and payload preparation
+* HTTP Request node for the AI call
+* Code nodes for prompt construction, response parsing, payload preparation, and response shaping
 
 ### AI Provider
 
@@ -144,16 +151,16 @@ This makes the tool easier to debug and evaluate as an AI application.
 
 * Supabase PostgreSQL
 
-Tables:
+Main tables:
 
 * `meetings`
 * `llm_logs`
 
 ### Deployment
 
-* Vercel for frontend
+* Vercel for frontend deployment
 * n8n/SumoPod for backend workflow
-* Supabase for persistence and logs
+* Supabase for persistence and observability logs
 
 ---
 
@@ -194,16 +201,16 @@ React displays editable result
 The n8n workflow contains the following steps:
 
 1. `Webhook`
-   Receives meeting title and transcript from the React app.
+   Receives the meeting title and transcript from the React app.
 
 2. `Build LLM Request`
    Builds the system prompt, user message, model request body, and start timestamp.
 
 3. `Call AI`
-   Sends the structured chat completion request to SumoPod AI.
+   Sends the structured chat completion request to the SumoPod AI API.
 
 4. `Parse AI Result`
-   Parses the model response into JSON and prepares structured meeting output.
+   Cleans the raw model response, removes markdown code fence wrappers when present, parses the response into JSON, and prepares the structured meeting output.
 
 5. `Build Meeting Insert Body`
    Creates the Supabase payload for the `meetings` table.
@@ -215,13 +222,13 @@ The n8n workflow contains the following steps:
    Creates the Supabase payload for the `llm_logs` table.
 
 8. `Insert LLM Log`
-   Stores the full AI call log, including prompt, raw output, parsed output, model, tokens, latency, and error details.
+   Stores the full AI call log, including input messages, raw output, parsed output, model, token usage, latency, and error details.
 
 9. `Build Response`
-   Shapes the response returned to the frontend.
+   Shapes the final response returned to the frontend.
 
 10. `Respond to Webhook`
-    Sends the final structured result back to React.
+    Sends the structured result back to React.
 
 ---
 
@@ -229,7 +236,7 @@ The n8n workflow contains the following steps:
 
 ### `meetings`
 
-Stores processed meeting results.
+Stores processed meeting notes.
 
 Main fields:
 
@@ -276,11 +283,12 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_or_anon_key
 VITE_N8N_WEBHOOK_URL=your_n8n_production_webhook_url
 ```
 
-Important:
+Important notes:
 
 * Do not put the Supabase service role key in the frontend.
-* Do not put the SumoPod API key in the frontend.
-* Secret keys should stay inside n8n/server-side workflow configuration.
+* Do not put the SumoPod AI API key in the frontend.
+* Secret keys should stay inside n8n or another server-side environment.
+* `.env` is excluded from Git through `.gitignore`.
 
 ---
 
@@ -292,19 +300,19 @@ Install dependencies:
 npm install
 ```
 
-Run development server:
+Run the development server:
 
 ```bash
 npm run dev
 ```
 
-Build production version:
+Build the production version:
 
 ```bash
 npm run build
 ```
 
-Preview production build:
+Preview the production build locally:
 
 ```bash
 npm run preview
@@ -332,8 +340,9 @@ The frontend only uses public environment variables required by the browser app.
 Sensitive credentials are kept outside the frontend:
 
 * SumoPod AI API key is stored in n8n.
-* Supabase service role key is used only in n8n HTTP Request nodes.
-* `.env` is excluded from Git through `.gitignore`.
+* Supabase service role key is used only inside n8n HTTP Request nodes.
+* `.env` is excluded from Git.
+* The frontend never directly calls the AI provider.
 
 ---
 
@@ -345,11 +354,48 @@ The UI uses KPI Media-inspired branding:
 * Yellow: `#FFCC00`
 * Light dashboard background
 * White rounded cards
-* KPI-styled active navigation
+* Fixed KPI-branded top navigation
+* Yellow active navigation state
+* Custom `.txt` upload component
+* Step-by-step processing indicator
 * Review badges for incomplete AI output
 * Print-specific PDF layout
 
-The design goal is to feel like a lightweight internal AI operations tool rather than a generic demo.
+The design goal is to make the tool feel like a lightweight internal AI operations product rather than a generic demo. The fixed top navigation keeps the app compact and gives more horizontal space to the Process, History, and LLM Logs pages.
+
+---
+
+## Prompt Behavior
+
+The system prompt is designed to:
+
+* Return only valid JSON.
+* Keep the output in the same main language as the transcript.
+* Preserve names, brands, platforms, campaign names, and technical terms.
+* Separate summaries, action items, key decisions, and warnings.
+* Avoid inventing owners, deadlines, decisions, or context.
+* Assign owners and deadlines conservatively.
+* Add warnings when ownership, deadlines, or transcript context are unclear.
+
+This approach makes the AI output easier to review and safer to use in real meeting workflows.
+
+---
+
+## What I Added Beyond the Core Requirements
+
+* KPI Media-inspired visual branding.
+* Fixed top navigation.
+* Custom transcript upload UI.
+* Step-by-step processing state.
+* Editable AI-generated output.
+* Action item readiness badges.
+* Warning indicators for unclear owner/deadline.
+* Slack-ready copy output.
+* Browser-based Print / Save as PDF.
+* Searchable meeting history.
+* History stats dashboard.
+* Searchable LLM logs.
+* Token, latency, model, raw output, parsed output, and error logging.
 
 ---
 
@@ -362,4 +408,4 @@ Given more time, I would improve the tool by adding:
 * Better speaker diarization support for transcripts with real speaker names.
 * Additional export formats such as `.docx`.
 * More advanced prompt evaluation and regression tests.
-* A custom backend using Hono or Cloudflare Workers for lower-level control over validation, errors, and latency.
+* A custom backend using Hono or Cloudflare Workers for more granular validation, error handling, and latency control.
