@@ -74,10 +74,30 @@ export default function ProcessPage() {
             />
           </label>
 
-          <label>
-            Upload .txt transcript
-            <input type="file" accept=".txt,text/plain" onChange={handleFileUpload} />
-          </label>
+        <label>
+          Upload .txt transcript
+          <div className="file-upload-card">
+            <input
+              id="transcript-file"
+              className="file-upload-input"
+              type="file"
+              accept=".txt,text/plain"
+              onChange={handleFileUpload}
+            />
+
+            <label className="file-upload-button" htmlFor="transcript-file">
+              <span className="file-upload-icon">↥</span>
+              <span>
+                <strong>Choose transcript file</strong>
+                <small>Upload a .txt file from Fireflies, Otter, or meeting notes.</small>
+              </span>
+            </label>
+
+            <p className="file-upload-name">
+              {transcript ? 'Transcript loaded. You can still edit it below.' : 'No file selected yet.'}
+            </p>
+          </div>
+        </label>
 
           <label>
             Raw transcript
