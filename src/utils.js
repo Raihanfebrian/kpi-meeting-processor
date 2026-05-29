@@ -41,6 +41,40 @@ export function buildMarkdown(meeting) {
   return `# ${meeting.title || 'Untitled Meeting'}\n\nProcessed: ${meeting.created_at ? formatDate(meeting.created_at) : '-'}\n\n## Summary\n${meeting.summary || ''}\n\n## Action Items\n${actionItemsMarkdown}\n\n## Key Decisions\n${decisionsMarkdown}\n${warningsMarkdown}`;
 }
 
+export function buildSlackMessage(meeting) {
+  const actionItems = safeArray(meeting.action_items);
+  const decisions = safeArray(meeting.key_decisions);
+  const warnings = safeArray(meeting.warnings);
+
+  const actionItemsText = actionItems.length
+    ? actionItems.map((item) => {
+        const task = item.task || 'Untitled task';
+        const owner = item.owner || 'Not mentioned';
+        const deadline = item.deadline || 'Not mentioned';
+        return `• ${task} → Owner: ${owner} | Deadline: ${deadline}`;
+      }).join('\n')
+    : '• No action items found.';
+
+  const decisionsText = decisions.length
+    ? decisions.map((decision) => `• ${decision}`).join('\n')
+    : '• No key decisions found.';
+
+  const warningsText = warnings.length
+    ? `\n*Warnings:*\n${warnings.map((warning) => `• ${warning}`).join('\n')}`
+    : '';
+
+  return `*Meeting: ${meeting.title || 'Untitled Meeting'}*
+
+*Summary:*
+${meeting.summary || '-'}
+
+*Action Items:*
+${actionItemsText}
+
+*Key Decisions:*
+${decisionsText}${warningsText}`;
+}
+
 export async function copyText(text) {
   await navigator.clipboard.writeText(text);
 }
