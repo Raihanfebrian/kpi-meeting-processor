@@ -1,0 +1,9 @@
+Raihan: Today we need to review the Meta campaign performance and decide what to do next week.
+Maya: The Google campaign is underperforming because the new creative is not ready yet.
+Rafli: Let's pause the Google campaign until the creative team finishes the new assets.
+Maya: I can send the updated creative brief by Friday.
+Raihan: Great. Dika, please check the tracking issue in GA4 before Monday.
+Dika: Noted. I will test the event setup and update the team.
+Rafli: We also need a short client update. Raihan, can you draft that tomorrow?
+Raihan: Yes, I will prepare the client update tomorrow afternoon.
+Maya: For Meta, let's keep the current budget for now because CPA is stable.
