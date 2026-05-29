@@ -12,6 +12,29 @@ function normalizeMissing(value) {
   );
 }
 
+function TrashIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
+  );
+}
+
 export default function ActionItemsEditor({ items, onChange }) {
   function updateItem(index, field, value) {
     const next = items.map((item, itemIndex) => (
@@ -70,6 +93,16 @@ export default function ActionItemsEditor({ items, onChange }) {
                     <span className={`status-pill ${needsReview ? 'review' : 'ready'}`}>
                       {needsReview ? 'Needs review' : 'Ready'}
                     </span>
+
+                    <button
+                      type="button"
+                      className="trash-button"
+                      onClick={() => removeItem(index)}
+                      aria-label="Remove action item"
+                      title="Remove action item"
+                    >
+                      <TrashIcon />
+                    </button>
                   </div>
                 </div>
 
@@ -82,10 +115,11 @@ export default function ActionItemsEditor({ items, onChange }) {
 
                 <label>
                   Task
-                  <textarea
-                    rows="2"
+                  <input
+                    type="text"
                     value={item.task || ''}
                     onChange={(event) => updateItem(index, 'task', event.target.value)}
+                    placeholder="Describe the action item..."
                   />
                 </label>
 
@@ -107,12 +141,6 @@ export default function ActionItemsEditor({ items, onChange }) {
                       onChange={(event) => updateItem(index, 'deadline', event.target.value)}
                     />
                   </label>
-                </div>
-
-                <div className="action-footer">
-                  <button type="button" className="ghost danger" onClick={() => removeItem(index)}>
-                    Remove
-                  </button>
                 </div>
               </article>
             );

@@ -132,7 +132,9 @@ export default function HistoryPage() {
               <Link className="history-row" key={meeting.id} to={`/meeting/${meeting.id}`}>
                 <div>
                   <h2>{meeting.title || 'Untitled Meeting'}</h2>
-                  <p>{meeting.summary || 'No summary available.'}</p>
+                  <p className="history-summary">
+                    {meeting.summary || 'No summary available.'}
+                  </p>
                   <small>Processed: {formatDate(meeting.created_at)}</small>
                 </div>
                 <span className="badge">{meeting.status || 'processed'}</span>

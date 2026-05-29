@@ -157,7 +157,7 @@ export default function LogsPage() {
                     key={log.id}
                     onClick={() => setSelectedId(log.id)}
                   >
-                    <strong>{log.model || 'Unknown model'}</strong>
+                    <strong className="break-anywhere">{log.model || 'Unknown model'}</strong>
                     <span>
                       {Number(log.total_tokens || 0).toLocaleString()} tokens · {log.latency_ms || 0}ms
                     </span>
@@ -188,32 +188,34 @@ export default function LogsPage() {
             <p className="muted">Select a log to inspect details.</p>
           ) : (
             <>
-              <div className="metrics-grid">
-                <div>
-                  <span>Model</span>
-                  <strong>{selectedLog.model || 'Unknown'}</strong>
-                </div>
-
-                <div>
-                  <span>Input tokens</span>
-                  <strong>{selectedLog.input_tokens || 0}</strong>
-                </div>
-
-                <div>
-                  <span>Output tokens</span>
-                  <strong>{selectedLog.output_tokens || 0}</strong>
-                </div>
-
-                <div>
-                  <span>Total tokens</span>
-                  <strong>{selectedLog.total_tokens || 0}</strong>
-                </div>
-
-                <div>
-                  <span>Latency</span>
-                  <strong>{selectedLog.latency_ms || 0}ms</strong>
-                </div>
+              <div className="model-detail-line">
+                <span>Model</span>
+                <strong className="break-anywhere">
+                  {selectedLog.model || 'Unknown'}
+                </strong>
               </div>
+
+            <div className="metrics-grid">
+              <div>
+                <span>Input tokens</span>
+                <strong>{selectedLog.input_tokens || 0}</strong>
+              </div>
+
+              <div>
+                <span>Output tokens</span>
+                <strong>{selectedLog.output_tokens || 0}</strong>
+              </div>
+
+              <div>
+                <span>Total tokens</span>
+                <strong>{selectedLog.total_tokens || 0}</strong>
+              </div>
+
+              <div>
+                <span>Latency</span>
+                <strong>{selectedLog.latency_ms || 0}ms</strong>
+              </div>
+            </div>
 
               {getErrorText(selectedLog) && (
                 <div className="error">

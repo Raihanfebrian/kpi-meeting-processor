@@ -17,6 +17,28 @@ export function formatDate(value) {
   }).format(new Date(value));
 }
 
+function normalizeExportValue(value) {
+  if (!value) return 'Not mentioned';
+
+  const text = String(value).trim();
+
+  if (!text) return 'Not mentioned';
+
+  const normalized = text.toLowerCase();
+
+  if (
+    normalized === 'unassigned' ||
+    normalized === 'not mentioned' ||
+    normalized === 'no deadline mentioned' ||
+    normalized === 'null' ||
+    normalized === '-'
+  ) {
+    return 'Not mentioned';
+  }
+
+  return text;
+}
+
 export function buildMarkdown(meeting) {
   const actionItems = safeArray(meeting.action_items);
   const decisions = safeArray(meeting.key_decisions);
@@ -24,8 +46,9 @@ export function buildMarkdown(meeting) {
 
   const actionItemsMarkdown = actionItems.length
     ? actionItems.map((item, index) => {
-        const owner = item.owner || 'Unassigned';
-        const deadline = item.deadline || 'No deadline mentioned';
+        const owner = normalizeExportValue(item.owner);
+        const deadline = normalizeExportValue(item.deadline);
+
         return `${index + 1}. **${item.task || 'Untitled task'}**\n   - Owner: ${owner}\n   - Deadline: ${deadline}`;
       }).join('\n')
     : 'No action items found.';
@@ -49,8 +72,8 @@ export function buildSlackMessage(meeting) {
   const actionItemsText = actionItems.length
     ? actionItems.map((item) => {
         const task = item.task || 'Untitled task';
-        const owner = item.owner || 'Not mentioned';
-        const deadline = item.deadline || 'Not mentioned';
+        const owner = normalizeExportValue(item.owner);
+        const deadline = normalizeExportValue(item.deadline);
         return `• ${task} → Owner: ${owner} | Deadline: ${deadline}`;
       }).join('\n')
     : '• No action items found.';
