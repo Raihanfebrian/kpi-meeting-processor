@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import ActionItemsEditor from './ActionItemsEditor.jsx';
 import DecisionsEditor from './DecisionsEditor.jsx';
+import { sendMeetingToSlack } from '../api.js';
 import {
   buildMarkdown,
   buildSlackMessage,
@@ -16,8 +17,10 @@ export default function MeetingEditor({ initialMeeting, onSave }) {
     key_decisions: safeArray(initialMeeting.key_decisions),
     warnings: safeArray(initialMeeting.warnings),
   });
+
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState('');
+  const [sendingSlack, setSendingSlack] = useState(false);
 
   const markdown = useMemo(() => buildMarkdown(meeting), [meeting]);
   const slackMessage = useMemo(() => buildSlackMessage(meeting), [meeting]);
@@ -26,28 +29,64 @@ export default function MeetingEditor({ initialMeeting, onSave }) {
     return safeArray(meeting.action_items).filter((item) => !item.owner || !item.deadline).length;
   }, [meeting.action_items]);
 
+  async function saveCurrentMeeting(successMessage = 'Saved edited result.') {
+    const saved = await onSave({
+      title: meeting.title,
+      summary: meeting.summary,
+      action_items: meeting.action_items,
+      key_decisions: meeting.key_decisions,
+      warnings: meeting.warnings,
+    });
+
+    const normalizedSaved = {
+      ...(saved || meeting),
+      action_items: safeArray((saved || meeting).action_items),
+      key_decisions: safeArray((saved || meeting).key_decisions),
+      warnings: safeArray((saved || meeting).warnings),
+    };
+
+    setMeeting(normalizedSaved);
+
+    if (successMessage) {
+      setNotice(successMessage);
+    }
+
+    return normalizedSaved;
+  }
+
   async function handleSave() {
     setSaving(true);
     setNotice('');
+
     try {
-      const saved = await onSave({
-        title: meeting.title,
-        summary: meeting.summary,
-        action_items: meeting.action_items,
-        key_decisions: meeting.key_decisions,
-        warnings: meeting.warnings,
-      });
-      setMeeting({
-        ...saved,
-        action_items: safeArray(saved.action_items),
-        key_decisions: safeArray(saved.key_decisions),
-        warnings: safeArray(saved.warnings),
-      });
-      setNotice('Saved edited result.');
+      await saveCurrentMeeting('Saved edited result.');
     } catch (error) {
       setNotice(error.message || 'Failed to save.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleSendToSlack() {
+    setSendingSlack(true);
+    setNotice('');
+
+    try {
+      const savedMeeting = await saveCurrentMeeting('');
+
+      const meetingId = savedMeeting.id || savedMeeting.meeting_id;
+
+      if (!meetingId) {
+        throw new Error('Meeting ID is missing. Please save or reopen this meeting before sending to Slack.');
+      }
+
+      const result = await sendMeetingToSlack(meetingId);
+
+      setNotice(result?.message || `Sent to ${result?.channel || '#meeting-notes'}.`);
+    } catch (error) {
+      setNotice(error.message || 'Failed to send to Slack.');
+    } finally {
+      setSendingSlack(false);
     }
   }
 
@@ -116,7 +155,9 @@ export default function MeetingEditor({ initialMeeting, onSave }) {
           <section className="card stack">
             <h2>Warnings</h2>
             <ul>
-              {meeting.warnings.map((warning, index) => <li key={`${index}-${warning}`}>{warning}</li>)}
+              {meeting.warnings.map((warning, index) => (
+                <li key={`${index}-${warning}`}>{warning}</li>
+              ))}
             </ul>
           </section>
         )}
@@ -127,20 +168,34 @@ export default function MeetingEditor({ initialMeeting, onSave }) {
               <h2>Export Preview</h2>
               <p>Clean output for Slack, Notion, docs, PDF print, or submission demo.</p>
             </div>
+
             <div className="button-row">
               <button type="button" className="secondary" onClick={handleCopyMarkdown}>
                 Copy Markdown
               </button>
+
               <button type="button" className="secondary" onClick={handleCopySlack}>
                 Slack Copy
               </button>
+
+              <button
+                type="button"
+                className="secondary"
+                onClick={handleSendToSlack}
+                disabled={saving || sendingSlack}
+              >
+                {sendingSlack ? 'Sending...' : 'Send to Slack'}
+              </button>
+
               <button type="button" className="secondary" onClick={() => downloadMarkdown(meeting)}>
                 Download .md
               </button>
+
               <button type="button" className="secondary" onClick={handlePrint}>
                 Print / Save PDF
               </button>
-              <button type="button" onClick={handleSave} disabled={saving}>
+
+              <button type="button" onClick={handleSave} disabled={saving || sendingSlack}>
                 {saving ? 'Saving...' : 'Save edits'}
               </button>
             </div>

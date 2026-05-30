@@ -61,3 +61,20 @@ export async function fetchLogs() {
   if (error) throw error;
   return data || [];
 }
+export async function sendMeetingToSlack(meetingId) {
+  const webhookUrl = import.meta.env.VITE_SLACK_SEND_WEBHOOK_URL;
+
+  if (!webhookUrl) {
+    throw new Error('Slack send webhook URL is not configured.');
+  }
+
+  if (!meetingId) {
+    throw new Error('Meeting ID is required before sending to Slack.');
+  }
+
+  const { data } = await axios.post(webhookUrl, {
+    meeting_id: meetingId,
+  });
+
+  return data;
+}
