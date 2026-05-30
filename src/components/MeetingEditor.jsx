@@ -234,49 +234,71 @@ export default function MeetingEditor({ initialMeeting, onSave }) {
       </div>
 
       <article className="print-document print-only">
-        <header className="print-header">
-          <p className="eyebrow">KPI Meeting Processor</p>
-          <h1>{meeting.title || 'Untitled Meeting'}</h1>
-          <p>Processed meeting notes generated from transcript.</p>
+        <header className="print-report-header">
+          <div>
+            <p className="print-kicker">KPI Meeting Processor</p>
+            <h1>{meeting.title || 'Untitled Meeting'}</h1>
+            <p className="print-subtitle">Structured meeting notes generated from transcript.</p>
+          </div>
+
+          <div className="print-status-pill">
+            {meeting.status || 'Processed'}
+          </div>
         </header>
 
-        <section>
-          <h2>Summary</h2>
+        <section className="print-section print-summary-section">
+          <div className="print-section-heading">
+            <span>01</span>
+            <h2>Summary</h2>
+          </div>
           <p>{meeting.summary || '-'}</p>
         </section>
 
-        <section>
-          <h2>Action Items</h2>
+        <section className="print-section">
+          <div className="print-section-heading">
+            <span>02</span>
+            <h2>Action Items</h2>
+          </div>
+
           {meeting.action_items.length === 0 ? (
-            <p>No action items found.</p>
+            <p className="print-muted">No action items found.</p>
           ) : (
-            <table className="print-table">
-              <thead>
-                <tr>
-                  <th>Task</th>
-                  <th>Owner</th>
-                  <th>Deadline</th>
-                </tr>
-              </thead>
-              <tbody>
-                {meeting.action_items.map((item, index) => (
-                  <tr key={`${index}-${item.task}`}>
-                    <td>{item.task || 'Untitled task'}</td>
-                    <td>{item.owner || 'Not mentioned'}</td>
-                    <td>{item.deadline || 'Not mentioned'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="print-action-list">
+              {meeting.action_items.map((item, index) => (
+                <div className="print-action-card" key={`${index}-${item.task}`}>
+                  <div className="print-action-number">Action {index + 1}</div>
+
+                  <div className="print-action-task">
+                    {item.task || 'Untitled task'}
+                  </div>
+
+                  <div className="print-action-meta">
+                    <div>
+                      <span>Owner</span>
+                      <strong>{item.owner || 'Not mentioned'}</strong>
+                    </div>
+
+                    <div>
+                      <span>Deadline</span>
+                      <strong>{item.deadline || 'Not mentioned'}</strong>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </section>
 
-        <section>
-          <h2>Key Decisions</h2>
+        <section className="print-section">
+          <div className="print-section-heading">
+            <span>03</span>
+            <h2>Key Decisions</h2>
+          </div>
+
           {meeting.key_decisions.length === 0 ? (
-            <p>No key decisions found.</p>
+            <p className="print-muted">No key decisions found.</p>
           ) : (
-            <ol>
+            <ol className="print-decision-list">
               {meeting.key_decisions.map((decision, index) => (
                 <li key={`${index}-${decision}`}>{decision}</li>
               ))}
@@ -285,9 +307,13 @@ export default function MeetingEditor({ initialMeeting, onSave }) {
         </section>
 
         {meeting.warnings.length > 0 && (
-          <section>
-            <h2>Warnings</h2>
-            <ul>
+          <section className="print-section print-warning-section">
+            <div className="print-section-heading">
+              <span>04</span>
+              <h2>Warnings</h2>
+            </div>
+
+            <ul className="print-warning-list">
               {meeting.warnings.map((warning, index) => (
                 <li key={`${index}-${warning}`}>{warning}</li>
               ))}
