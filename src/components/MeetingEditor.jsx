@@ -21,6 +21,7 @@ export default function MeetingEditor({ initialMeeting, onSave }) {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState('');
   const [sendingSlack, setSendingSlack] = useState(false);
+  const [saveConfirmed, setSaveConfirmed] = useState(false);
 
   const markdown = useMemo(() => buildMarkdown(meeting), [meeting]);
   const slackMessage = useMemo(() => buildSlackMessage(meeting), [meeting]);
@@ -54,12 +55,21 @@ export default function MeetingEditor({ initialMeeting, onSave }) {
     return normalizedSaved;
   }
 
+  function showSavedConfirmation() {
+    setSaveConfirmed(true);
+
+    window.setTimeout(() => {
+      setSaveConfirmed(false);
+    }, 2500);
+  }
+
   async function handleSave() {
     setSaving(true);
     setNotice('');
 
     try {
-      await saveCurrentMeeting('Saved edited result.');
+      await saveCurrentMeeting('');
+      showSavedConfirmation();
     } catch (error) {
       setNotice(error.message || 'Failed to save.');
     } finally {
@@ -73,6 +83,7 @@ export default function MeetingEditor({ initialMeeting, onSave }) {
 
     try {
       const savedMeeting = await saveCurrentMeeting('');
+      showSavedConfirmation();
 
       const meetingId = savedMeeting.id || savedMeeting.meeting_id;
 
@@ -82,7 +93,7 @@ export default function MeetingEditor({ initialMeeting, onSave }) {
 
       const result = await sendMeetingToSlack(meetingId);
 
-      setNotice(result?.message || `Sent to ${result?.channel || '#meeting-notes'}.`);
+      setNotice(result?.message || `Sent to ${result?.channel || '#social'}.`);
     } catch (error) {
       setNotice(error.message || 'Failed to send to Slack.');
     } finally {
@@ -162,41 +173,56 @@ export default function MeetingEditor({ initialMeeting, onSave }) {
           </section>
         )}
 
-        <section className="card stack">
-          <div className="section-header">
-            <div>
-              <h2>Export Preview</h2>
-              <p>Clean output for Slack, Notion, docs, PDF print, or submission demo.</p>
+        <section className="card stack export-card">
+          <div className="save-share-area">
+            <div className="save-copy">
+              <p>Review complete? Save your edits before sharing.</p>
             </div>
 
-            <div className="button-row">
-              <button type="button" className="secondary" onClick={handleCopyMarkdown}>
-                Copy Markdown
-              </button>
+            <button
+              type="button"
+              className={`save-edits-button ${saveConfirmed ? 'saved' : ''}`}
+              onClick={handleSave}
+              disabled={saving || sendingSlack}
+            >
+              {saving ? 'Saving...' : saveConfirmed ? '✓ Edits saved' : 'Save edits'}
+            </button>
+          </div>
 
-              <button type="button" className="secondary" onClick={handleCopySlack}>
-                Slack Copy
-              </button>
+          <div className="export-share-area">
+            <div className="export-share-header">
+              <div>
+                <h2>Export & Share</h2>
+                <p>Choose how to share or export the final notes.</p>
+              </div>
+            </div>
 
+            <div className="export-primary-actions">
               <button
                 type="button"
-                className="secondary"
+                className="export-primary-button"
                 onClick={handleSendToSlack}
                 disabled={saving || sendingSlack}
               >
-                {sendingSlack ? 'Sending...' : 'Send to Slack'}
+                {sendingSlack ? 'Sending...' : '📤 Send to Slack'}
               </button>
 
-              <button type="button" className="secondary" onClick={() => downloadMarkdown(meeting)}>
+              <button type="button" className="export-primary-button" onClick={handlePrint}>
+                🖨 Print / Save PDF
+              </button>
+            </div>
+
+            <div className="export-secondary-actions">
+              <button type="button" className="export-secondary-button" onClick={() => downloadMarkdown(meeting)}>
                 Download .md
               </button>
 
-              <button type="button" className="secondary" onClick={handlePrint}>
-                Print / Save PDF
+              <button type="button" className="export-secondary-button" onClick={handleCopyMarkdown}>
+                Copy Markdown
               </button>
 
-              <button type="button" onClick={handleSave} disabled={saving || sendingSlack}>
-                {saving ? 'Saving...' : 'Save edits'}
+              <button type="button" className="export-secondary-button" onClick={handleCopySlack}>
+                Slack Copy
               </button>
             </div>
           </div>
