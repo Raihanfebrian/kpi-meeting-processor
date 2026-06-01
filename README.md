@@ -2,7 +2,7 @@
 
 A React + Vite internal AI tool built for the KPI Media Junior AI Engineer technical assessment.
 
-KPI Meeting Processor turns raw meeting transcripts into structured, editable meeting notes. It generates summaries, action items, key decisions, and warnings, then stores the results in Supabase with a dedicated LLM observability layer.
+KPI Meeting Processor turns raw meeting transcripts into structured, editable meeting notes. It generates summaries, action items, key decisions, and warnings, then stores the results in Supabase with a dedicated LLM observability layer and direct Slack delivery.
 
 Live demo: https://kpi-meeting-processor.vercel.app
 Repository: https://github.com/Raihanfebrian/kpi-meeting-processor
@@ -13,13 +13,14 @@ Repository: https://github.com/Raihanfebrian/kpi-meeting-processor
 
 KPI Meeting Processor is designed to help teams convert raw meeting transcripts into clear follow-up notes faster.
 
-Users can paste a transcript, upload a `.txt` transcript file, process it through an AI workflow, review and edit the generated output, export the result, reopen previous meetings, and inspect every LLM call through a logs page.
+Users can paste a transcript, upload a `.txt` transcript file, process it through an AI workflow, review and edit the generated output, export the result, send the final notes to Slack, reopen previous meetings, and inspect every LLM call through a logs page.
 
-The tool focuses on three main goals:
+The tool focuses on four main goals:
 
 1. Reduce manual effort in summarizing meeting transcripts.
 2. Make action items, owners, deadlines, and decisions easier to review.
-3. Provide LLM observability for debugging and evaluation.
+3. Reduce friction in sharing meeting notes to Slack.
+4. Provide LLM observability for debugging and evaluation.
 
 ---
 
@@ -31,8 +32,8 @@ The tool focuses on three main goals:
 * Upload `.txt` transcript files.
 * Add a meeting title.
 * Process transcripts through an n8n AI workflow.
-* Supports Indonesian, English, and mixed-language transcripts.
-* Preserves proper names, brand names, platform names, campaign names, and technical terms.
+* Supports clear named-speaker transcripts and generic audio transcripts such as `Speaker 1`, `Speaker 2`, and `Speaker 3`.
+* Preserves proper names, speaker labels, brand names, platform names, campaign names, and technical terms.
 
 ### Processing Experience
 
@@ -51,11 +52,11 @@ The AI returns structured JSON containing:
 * Owners
 * Deadlines
 * Key decisions
-* Warnings for unclear owner, unclear deadline, or ambiguous transcript context
+* Warnings for unclear owner, unclear deadline, unclear speaker identity, or ambiguous transcript context
 
 ### Editable Output
 
-Users can review and edit the AI-generated result before exporting:
+Users can review and edit the AI-generated result before exporting or sharing:
 
 * Edit meeting title.
 * Edit summary.
@@ -75,18 +76,50 @@ The app highlights incomplete or uncertain action items:
 * `Deadline missing` indicator.
 * Warning banner when generated output needs review.
 
-This helps users avoid blindly trusting AI output when the transcript does not clearly mention an owner or deadline.
+This is useful because real meeting transcripts often contain unclear ownership, implied deadlines, or generic speaker labels.
 
-### Export Options
+### Export and Share
 
-Users can export or share the final notes through:
+Users can export or share final notes through:
 
+* Direct Send to Slack
+* Print / Save as PDF
+* Download `.md`
 * Copy Markdown
 * Slack-ready copy
-* Download `.md`
-* Print / Save as PDF
 
-The PDF export uses the browser print dialog with print-specific CSS, so the exported document removes navigation elements and keeps the meeting notes clean.
+The export section is organized by priority:
+
+* Save edits first.
+* Primary share/export actions: Send to Slack and Print / Save PDF.
+* Secondary export actions: Download `.md`, Copy Markdown, and Slack Copy.
+
+### Direct Slack Integration
+
+The app includes a direct Send to Slack flow using a dedicated n8n workflow.
+
+Flow:
+
+```txt
+React
+  |
+  v
+n8n Slack webhook
+  |
+  v
+Fetch meeting from Supabase
+  |
+  v
+Format Slack Block Kit payload
+  |
+  v
+Slack Incoming Webhook
+  |
+  v
+Message appears in Slack channel
+```
+
+The Slack Incoming Webhook URL is stored only inside n8n. The frontend only calls the n8n proxy webhook, so the Slack secret is never exposed in React, GitHub, or Vercel.
 
 ### Meeting History
 
@@ -140,7 +173,7 @@ This makes the tool easier to debug, evaluate, and explain as an AI application.
 * n8n on SumoPod
 * Production webhook
 * HTTP Request node for the AI call
-* Code nodes for prompt construction, response parsing, payload preparation, and response shaping
+* Code nodes for prompt construction, response parsing, payload preparation, response shaping, and Slack payload formatting
 
 ### AI Provider
 
@@ -159,8 +192,9 @@ Main tables:
 ### Deployment
 
 * Vercel for frontend deployment
-* n8n/SumoPod for backend workflow
+* n8n/SumoPod for backend workflows
 * Supabase for persistence and observability logs
+* Slack Incoming Webhook for direct Slack delivery
 
 ---
 
@@ -170,7 +204,7 @@ Main tables:
 React + Vite Frontend
         |
         v
-n8n Production Webhook
+n8n Processing Webhook
         |
         v
 Build LLM Request
@@ -194,17 +228,40 @@ Build Response
 React displays editable result
 ```
 
+Slack sharing uses a separate workflow:
+
+```txt
+React Send to Slack Button
+        |
+        v
+n8n Slack Webhook
+        |
+        v
+Fetch Meeting from Supabase
+        |
+        v
+Format Slack Block Kit Payload
+        |
+        v
+Send to Slack Incoming Webhook
+        |
+        v
+Return Success Response to React
+```
+
+The processing workflow and Slack workflow are intentionally separated. This keeps the core meeting processing flow stable even if Slack delivery fails.
+
 ---
 
-## n8n Workflow
+## n8n Processing Workflow
 
-The n8n workflow contains the following steps:
+The main n8n workflow contains the following steps:
 
 1. `Webhook`
    Receives the meeting title and transcript from the React app.
 
 2. `Build LLM Request`
-   Builds the system prompt, user message, model request body, and start timestamp.
+   Builds the system prompt, user message, model request body, detected output language, and start timestamp.
 
 3. `Call AI`
    Sends the structured chat completion request to the SumoPod AI API.
@@ -229,6 +286,32 @@ The n8n workflow contains the following steps:
 
 10. `Respond to Webhook`
     Sends the structured result back to React.
+
+---
+
+## n8n Slack Workflow
+
+The Slack workflow is separate from the main processing workflow.
+
+It contains the following steps:
+
+1. `Webhook`
+   Receives a `meeting_id` from the React app.
+
+2. `Get Meeting from Supabase`
+   Fetches the saved meeting data from the `meetings` table.
+
+3. `Format Slack Payload`
+   Converts the meeting note into Slack Block Kit format.
+
+4. `Send to Slack`
+   Sends the formatted message to Slack using an Incoming Webhook.
+
+5. `Build Response`
+   Creates a clean success response for the frontend.
+
+6. `Respond to Webhook`
+   Returns the Slack delivery status to React.
 
 ---
 
@@ -273,6 +356,40 @@ Main fields:
 
 ---
 
+## Prompt Behavior
+
+The system prompt is designed to:
+
+* Return only valid JSON.
+* Write output in the detected dominant language of the transcript.
+* Preserve names, speaker labels, brands, platforms, campaign names, and technical terms.
+* Separate summaries, action items, key decisions, and warnings.
+* Avoid inventing owners, deadlines, decisions, or context.
+* Assign owners and deadlines conservatively.
+* Use generic speaker labels such as `Speaker 1` only when the transcript does not provide a reliable real name.
+* Add warnings when ownership, deadlines, speaker identity, or transcript context are unclear.
+
+This approach makes the AI output easier to review and safer to use in real meeting workflows.
+
+---
+
+## Demo Scenarios
+
+The demo data is intentionally seeded with different transcript patterns:
+
+1. **Clear campaign planning meeting**
+   Shows the happy path with named speakers, clear owners, clear deadlines, and multiple decisions.
+
+2. **Pure audio transcript with speaker labels only**
+   Shows how the tool handles realistic audio transcripts using `Speaker 1`, `Speaker 2`, and `Speaker 3`.
+
+3. **Ambiguous and decision-heavy strategy meeting**
+   Shows conservative extraction behavior when some tasks do not have clear owners or deadlines.
+
+These demo scenarios are designed to show both the strengths and realistic limitations of an AI meeting workflow.
+
+---
+
 ## Environment Variables
 
 Create a `.env` file based on `.env.example`.
@@ -280,13 +397,15 @@ Create a `.env` file based on `.env.example`.
 ```env
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_publishable_or_anon_key
-VITE_N8N_WEBHOOK_URL=your_n8n_production_webhook_url
+VITE_N8N_WEBHOOK_URL=your_n8n_processing_webhook_url
+VITE_SLACK_SEND_WEBHOOK_URL=your_n8n_slack_proxy_webhook_url
 ```
 
 Important notes:
 
 * Do not put the Supabase service role key in the frontend.
 * Do not put the SumoPod AI API key in the frontend.
+* Do not put the Slack Incoming Webhook URL in the frontend.
 * Secret keys should stay inside n8n or another server-side environment.
 * `.env` is excluded from Git through `.gitignore`.
 
@@ -327,9 +446,11 @@ The frontend is deployed on Vercel.
 The production app uses:
 
 * Vercel environment variables
-* n8n production webhook
+* n8n production webhook for transcript processing
+* n8n production webhook for Slack delivery
 * Supabase project URL and publishable key
 * Server-side AI call through n8n
+* Server-side Slack delivery through n8n
 
 ---
 
@@ -341,8 +462,10 @@ Sensitive credentials are kept outside the frontend:
 
 * SumoPod AI API key is stored in n8n.
 * Supabase service role key is used only inside n8n HTTP Request nodes.
+* Slack Incoming Webhook URL is stored only inside n8n.
 * `.env` is excluded from Git.
 * The frontend never directly calls the AI provider.
+* The frontend never directly calls Slack.
 
 ---
 
@@ -359,25 +482,10 @@ The UI uses KPI Media-inspired branding:
 * Custom `.txt` upload component
 * Step-by-step processing indicator
 * Review badges for incomplete AI output
-* Print-specific PDF layout
+* Prioritized Export & Share section
+* Print-specific PDF report layout
 
-The design goal is to make the tool feel like a lightweight internal AI operations product rather than a generic demo. The fixed top navigation keeps the app compact and gives more horizontal space to the Process, History, and LLM Logs pages.
-
----
-
-## Prompt Behavior
-
-The system prompt is designed to:
-
-* Return only valid JSON.
-* Keep the output in the same main language as the transcript.
-* Preserve names, brands, platforms, campaign names, and technical terms.
-* Separate summaries, action items, key decisions, and warnings.
-* Avoid inventing owners, deadlines, decisions, or context.
-* Assign owners and deadlines conservatively.
-* Add warnings when ownership, deadlines, or transcript context are unclear.
-
-This approach makes the AI output easier to review and safer to use in real meeting workflows.
+The design goal is to make the tool feel like a lightweight internal AI operations product rather than a generic demo.
 
 ---
 
@@ -389,13 +497,37 @@ This approach makes the AI output easier to review and safer to use in real meet
 * Step-by-step processing state.
 * Editable AI-generated output.
 * Action item readiness badges.
-* Warning indicators for unclear owner/deadline.
+* Warning indicators for unclear owner, deadline, or speaker identity.
 * Slack-ready copy output.
-* Browser-based Print / Save as PDF.
+* Direct Send to Slack integration.
+* Browser-based Print / Save as PDF with improved report layout.
 * Searchable meeting history.
 * History stats dashboard.
 * Searchable LLM logs.
 * Token, latency, model, raw output, parsed output, and error logging.
+* Demo data covering clear, speaker-label, and ambiguous transcript scenarios.
+
+---
+
+## Tradeoffs
+
+### Direct LLM Call Instead of AI Agent
+
+I intentionally used a direct structured LLM call instead of an AI Agent for the core transcript processing because the task requires predictable JSON, low latency, and easier debugging.
+
+An AI Agent would be more useful in a future version for cross-meeting search, follow-up detection, or querying historical meeting data with tools and memory.
+
+### Slack Incoming Webhook Instead of Full Slack OAuth
+
+I used Slack Incoming Webhook because it directly solves the main pain point: sending meeting notes to Slack without manual copy-paste.
+
+A full Slack app with OAuth would allow dynamic channel selection and user mentions, but it would also add token management, OAuth callbacks, scopes, and more operational complexity. For this assessment version, a fixed Slack channel through n8n is the right tradeoff.
+
+### Browser Print Instead of Server-Side PDF
+
+The PDF export uses the browser print dialog because it avoids adding extra PDF generation infrastructure while still allowing users to save a clean PDF report.
+
+A production version could add server-side PDF generation for more consistent formatting across browsers.
 
 ---
 
@@ -403,9 +535,13 @@ This approach makes the AI output easier to review and safer to use in real meet
 
 Given more time, I would improve the tool by adding:
 
-* Slack integration to send final meeting notes directly to a selected channel.
+* Speaker mapping UI, for example `Speaker 1 → Sarah`.
+* Slack channel selection from the UI using full Slack OAuth.
 * Authentication and role-based access for real internal usage.
 * Better speaker diarization support for transcripts with real speaker names.
 * Additional export formats such as `.docx`.
+* Task status tracking and follow-up reminders.
+* Calendar-aware deadline extraction.
+* AI-powered search across previous meetings.
 * More advanced prompt evaluation and regression tests.
 * A custom backend using Hono or Cloudflare Workers for more granular validation, error handling, and latency control.
