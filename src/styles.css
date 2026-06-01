@@ -1183,8 +1183,12 @@ button.trash-button svg {
   .print-only,
   .print-document,
   .print-document * {
-    display: revert !important;
     visibility: visible !important;
+  }
+
+  .print-only,
+  .print-document {
+    display: block !important;
   }
 
   .print-document {
@@ -1336,8 +1340,8 @@ button.trash-button svg {
   }
 
   .print-action-meta span {
-    display: block;
-    margin-bottom: 2px;
+    display: block !important;
+    margin-bottom: 3px;
     color: #64748b !important;
     font-size: 7pt !important;
     font-weight: 800 !important;
@@ -1346,10 +1350,11 @@ button.trash-button svg {
   }
 
   .print-action-meta strong {
-    display: block;
+    display: block !important;
     color: #0f172a !important;
     font-size: 8.7pt !important;
     font-weight: 800 !important;
+    line-height: 1.3;
   }
 
   .print-decision-list {
